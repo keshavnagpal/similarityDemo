@@ -48,7 +48,7 @@
             	//debugger
                 similarity = JSON.parse(data);
                 console.log(similarity)
-				result = Math.floor(similarity["similarity"]*20)
+				result = Math.abs(Math.floor(similarity["similarity"]*20))
 				html='The sentences are '+result+'% similar';
 				console.log(html);
 				document.getElementById('sent').innerHTML=html;
