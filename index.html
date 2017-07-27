@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test</title>
+	<!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
+	<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+<body>
+	
+	<form id="testForm">
+		<input type="text" action="" name="sentence" method = 'POST' id="sent1" size="50"><br>
+		<input type="text" action="" name="sentence" method = 'POST' id="sent2" size="50"><br>
+		<button id="analyseButton" type="submit">Analyse</button>
+	</form>	
+
+	<p id ="sent"></p>
+	<script type="text/javascript">
+		var similarity='';
+		var sent='';
+		var sent1='';
+		var sent2='';
+
+		$('#testForm').submit(function (e) {
+			e.preventDefault();
+			document.getElementById('sent').innerHTML='';
+			sendapi();			
+			return false;
+		});
+
+		function sendapi() {
+			sent = document.getElementById('testForm');
+			sent1 = sent.elements[0].value;
+			sent2 = sent.elements[1].value;
+			console.log(sent1);
+			console.log(sent2);
+			// sent1 = sent1.replace(/ /g, "%20");
+			// sent2 = sent2.replace(/ /g, "%20");
+			//debugger
+			$.ajax({
+                method: 'GET',
+                url: 'https://apis.paralleldots.com/semanticsimilarity?sentence1='+sent1+'&sentence2='+sent2+'&apikey=yYfoOTfxe1oadgoMcX5mGHrQxpLpZRAYAmxRVOVN5Ig',
+                xhrFields: {
+                    withCredentials: false
+                },
+            })
+            .done(function (data) {
+            	//debugger
+                similarity = JSON.parse(data);
+                console.log(similarity)
+				result = Math.floor(similarity["similarity"]*20)
+				html='The sentences are '+result+'% similar';
+				console.log(html);
+				document.getElementById('sent').innerHTML=html;
+            })
+            .fail(function (data) {
+            	//debugger
+            });
+		}
+		
+	</script>
+</body>
+</html>
