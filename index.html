@@ -2,60 +2,81 @@
 <html>
 <head>
 	<title>Test</title>
-	<!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"> -->
 	<script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 </head>
+
+<style>
+	p, h3, button, input{
+		padding: 5px;
+		margin: 10px;
+		text-decoration: none;
+	}
+	body{
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+		 
+	}
+</style>
+
 <body>
-	
+	<h3>Compare Similarity between two sentences</h3>
+	<p>Service Used: <a href="https://labs.cognitive.microsoft.com/en-us/project-academic-knowledge" target="_blank">MS Academic Search API</a></p>
 	<form id="testForm">
-		<label>Enter sentences to compare below</label><br><br>
-		<input type="text" action="" name="sentence" method = 'POST' id="sent1" size="50"><br>
-		<input type="text" action="" name="sentence" method = 'POST' id="sent2" size="50"><br>
+		<input type="text" action="" name="sentence" method = 'POST' id="sent1" size="100"><br>
+		<input type="text" action="" name="sentence" method = 'POST' id="sent2" size="100"><br>
 		<button id="analyseButton" type="submit">Compare</button>
 	</form>	
-
+	
 	<p id ="sent"></p>
 	<script type="text/javascript">
 		var similarity='';
 		var sent='';
 		var sent1='';
 		var sent2='';
-
+		
 		$('#testForm').submit(function (e) {
 			e.preventDefault();
 			document.getElementById('sent').innerHTML='';
 			sendapi();			
 			return false;
 		});
-
+		
 		function sendapi() {
 			sent = document.getElementById('testForm');
 			sent1 = sent.elements[0].value;
 			sent2 = sent.elements[1].value;
 			console.log(sent1);
 			console.log(sent2);
-			// sent1 = sent1.replace(/ /g, "%20");
-			// sent2 = sent2.replace(/ /g, "%20");
-			//debugger
+			var params = {
+				// Request parameters
+				"s1": sent1,
+				"s2": sent2,
+			};
 			$.ajax({
-                method: 'GET',
-                url: 'https://apis.paralleldots.com/semanticsimilarity?sentence1='+sent1+'&sentence2='+sent2+'&apikey=yYfoOTfxe1oadgoMcX5mGHrQxpLpZRAYAmxRVOVN5Ig',
-                xhrFields: {
-                    withCredentials: false
-                },
-            })
-            .done(function (data) {
-            	//debugger
-                similarity = JSON.parse(data);
-                console.log(similarity)
-				result = Math.abs(Math.floor(similarity["similarity"]*20))
-				html='The sentences are '+result+'% similar';
-				console.log(html);
-				document.getElementById('sent').innerHTML=html;
-            })
-            .fail(function (data) {
-            	//debugger
-            });
+				url: "https://api.labs.cognitive.microsoft.com/academic/v1.0/similarity?" + $.param(params),
+				beforeSend: function(xhrObj){
+					// Request headers
+					xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","c52d3449c96d4140bb0a02438a206138");
+				},
+				type: "GET",
+			})
+			.done(function (data) {
+				var confidence=0;
+				var result = "";
+				debugger
+				if(data<0){
+					confidence = (data * -100).toFixed(2);
+					result = "<strong>Not Similar</strong>, Confidence: "+confidence.toString()+"%"; 
+				}
+				else{
+					confidence = (data * 100).toFixed(2);
+					result = "<strong>Similar</strong>, Confidence: "+confidence.toString()+"%";
+				}
+				console.log(result);
+				document.getElementById('sent').innerHTML=result;
+			})
+			.fail(function (data) {
+				//debugger
+			});
 		}
 		
 	</script>
