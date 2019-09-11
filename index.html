@@ -15,11 +15,29 @@
 		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 		 
 	}
+	a{
+		text-decoration: None;
+		font-size: 0.9em;
+	}
+	a:hover{
+		text-decoration: underline;
+	}
+	button:hover{
+		cursor: pointer;
+	}
+	.result{
+		font-size: 0.8em;
+	}
 </style>
 
 <body>
 	<h3>Compare Similarity between two sentences</h3>
-	<p>Service Used: <a href="https://labs.cognitive.microsoft.com/en-us/project-academic-knowledge" target="_blank">MS Academic Search API</a></p>
+	<p>Services Used:</p>
+	<ul>
+		
+		<li><a href="https://labs.cognitive.microsoft.com/en-us/project-academic-knowledge" target="_blank">MS Academic Search API</a></li>
+		<li><a href="https://azure.microsoft.com/en-in/services/cognitive-services/text-analytics/" target="_blank">MS Text Analytics</a></li>
+	</ul>
 	<form id="testForm">
 		<input type="text" action="" name="sentence" method = 'POST' id="sent1" size="100"><br>
 		<input type="text" action="" name="sentence" method = 'POST' id="sent2" size="100"><br>
@@ -46,36 +64,85 @@
 			sent2 = sent.elements[1].value;
 			console.log(sent1);
 			console.log(sent2);
-			var params = {
+			var similarity_params = {
 				// Request parameters
 				"s1": sent1,
 				"s2": sent2,
 			};
-			$.ajax({
-				url: "https://api.labs.cognitive.microsoft.com/academic/v1.0/similarity?" + $.param(params),
-				beforeSend: function(xhrObj){
-					// Request headers
-					xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","c52d3449c96d4140bb0a02438a206138");
-				},
-				type: "GET",
-			})
-			.done(function (data) {
-				var confidence=0;
-				var result = "";
-				debugger
-				if(data<0){
-					confidence = (data * -100).toFixed(2);
-					result = "<strong>Not Similar</strong>, Confidence: "+confidence.toString()+"%"; 
+			var sentiment_params={
+				"documents": [
+					{
+						"language": "en",
+						"id": "1",
+						"text": sent1
+					},
+					{
+						"language": "en",
+						"id": "2",
+						"text": sent2
+					}
+				]
+			};
+			var html="";
+			
+			var result ={
+				sentiment_sim: 0,
+				similarity: 0
+			};
+			$.when(
+				// Get the similarity
+				$.ajax({
+					url: "https://api.labs.cognitive.microsoft.com/academic/v1.0/similarity?" + $.param(similarity_params),
+					beforeSend: function(xhrObj){
+						// Request headers
+						xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","c52d3449c96d4140bb0a02438a206138");
+					},
+					type: "GET",
+				})
+				.done(function (data) {
+					result.similarity = data;
+					console.log("Got back similarity");
+				
+				})
+				.fail(function(data){
+					html = `Exception: ${data.responseJSON.message}`;
+					document.getElementById('sent').innerHTML+="<br>"+html;
+				}),
+
+				// Get the sentiment
+				$.ajax({
+					url: "https://sdz-text-analytics.cognitiveservices.azure.com/text/analytics/v2.1/sentiment",
+					beforeSend: function(xhrObj){
+						// Request headers
+						xhrObj.setRequestHeader("Ocp-Apim-Subscription-Key","ca20fd792cde41c9923481df64fad0c3");
+						xhrObj.setRequestHeader("Content-Type","application/json");
+						// xhrObj.setRequestHeader("Accept","application/json");
+					},
+					type: "POST",
+					data: JSON.stringify(sentiment_params),
+				})
+				.done(function (data) {
+					var diff = Math.abs(data.documents[0].score - data.documents[1].score);
+					result.sentiment_sim = 1-diff;
+					console.log("Got back sentiment");
+				})
+				.fail(function(data){
+					html = `Exception: ${data.responseJSON.message}`;
+					document.getElementById('sent').innerHTML+="<br>"+html;
+				}),
+
+			)
+			.then(function() {
+				console.log(result);
+				if(result.similarity>0 && result.sentiment_sim>0.5){
+					html = "<strong>Similar</strong>";
 				}
 				else{
-					confidence = (data * 100).toFixed(2);
-					result = "<strong>Similar</strong>, Confidence: "+confidence.toString()+"%";
+					html = "<strong>Not Similar</strong>";
 				}
 				console.log(result);
-				document.getElementById('sent').innerHTML=result;
-			})
-			.fail(function (data) {
-				//debugger
+				html+=`<ul class='result'><li>Cosine Similarity: ${((result.similarity+1)*50).toFixed(2)}%</li><li>Sentiment Similarity: ${(result.sentiment_sim*100).toFixed(2)}%</li></ul>`
+				document.getElementById('sent').innerHTML=html;
 			});
 		}
 		
