@@ -134,14 +134,15 @@
 			)
 			.then(function() {
 				console.log(result);
-				if(result.similarity>0 && result.sentiment_sim>0.5){
-					html = "<strong>Similar</strong>";
+				var avg_result = ((((result.similarity+1)*50) + (result.sentiment_sim*100))/2).toFixed(2);
+				if(avg_result>60){
+					html = `<strong>Similar</strong>`;
 				}
 				else{
-					html = "<strong>Not Similar</strong>";
+					html = `<strong>Not Similar</strong>`;
 				}
 				console.log(result);
-				html+=`<ul class='result'><li>Cosine Similarity: ${((result.similarity+1)*50).toFixed(2)}%</li><li>Sentiment Similarity: ${(result.sentiment_sim*100).toFixed(2)}%</li></ul>`
+				html+=`<ul class='result'><li>Average Similarity = ${avg_result}%</li><br><li>Cosine Similarity: ${((result.similarity+1)*50).toFixed(2)}%</li><li>Sentiment Similarity: ${(result.sentiment_sim*100).toFixed(2)}%</li></ul>`
 				document.getElementById('sent').innerHTML=html;
 			});
 		}
